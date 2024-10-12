@@ -1,0 +1,6 @@
+numpy
+scikit-learn
+scipy
+uvicorn
+asyncio
+fastapi

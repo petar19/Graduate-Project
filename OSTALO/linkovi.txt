@@ -1,0 +1,5 @@
+https://www.cs.uic.edu/~jakob/papers/cooperative-transit-tracking-sensys10.pdf
+
+https://ppms.cit.cmu.edu/media/project_files/Real_Time_Detection_of_Crowded_Buses_via_Mobile_Phones_2.pdf
+
+https://www.cs.cmu.edu/~tomasic/doc/2011/ZimmermanEtAlCHI2011.pdf

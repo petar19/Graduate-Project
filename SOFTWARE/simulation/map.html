@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Tramcheck simulation</title>
+
+    <style type="text/css">
+      /* Set the size of the div element that contains the map */
+      #map {
+        height: 750px;
+        /* The height is 400 pixels */
+        width: 80%;
+        /* The width is the width of the web page */
+        float: left;
+      }
+    </style>
+
+    <style type="text/css">
+      /* Set the size of the div element that contains the map */
+      #logbox {
+        height: 750px;
+        width: 20%;
+        float: right;
+        text-align: center;
+      }
+    </style>
+
+    <style type="text/css">
+      /* Set the size of the div element that contains the map */
+      #controls {
+        height: 200px;
+        width: 100%;
+        flex-grow: 1;
+      }
+    </style>
+    <script>
+      const server_address = 'ws://127.0.0.1:8000/ws'
+        let map;
+      // Initialize and add the map
+      function initMap() {
+        const zagreb = { lat: 45.8, lng: 15.9819 };
+        var styles = [
+          {
+            featureType: "poi",
+            stylers: [
+              { visibility: "off" }
+            ]   
+            }
+        ];
+
+        map = new google.maps.Map(document.getElementById("map"), {
+          zoom: 14,
+          center: zagreb,
+          styles: styles
+        });
+
+        google.maps.event.addListener(map, "rightclick", mapRightClick);
+      }
+
+      function getRandomArbitrary(min, max) {
+            return Math.random() * (max - min) + min;
+      }
+
+      function getRandomPos() {
+          return {lat: getRandomArbitrary(45.75,45.85), lng: getRandomArbitrary(15.96,16.00)}
+      }
+
+
+      let markers = []
+
+
+      function mapRightClick(event) {
+        const addedMarkersTextarea = document.getElementById("addedMarkersTextarea");
+
+        var lat = event.latLng.lat();
+        var lng = event.latLng.lng();
+        // populate yor box/field with lat, lng
+
+        addedMarkersTextarea.value += `${lat},${lng}\n`;
+        addCustomMarker(lat,lng,"purple",2);
+
+
+      }
+
+
+      function addCustomMarker(lat, lon, color, scale) {
+        console.log("adding custom marker", lat,lon,color,scale)
+        icon = {
+                  path: google.maps.SymbolPath.CIRCLE,
+                  strokeColor: color,
+                  scale: scale
+        }
+
+        const marker = new google.maps.Marker({
+                          position: { lat: lat, lng: lon },
+                          map: map,
+                          icon: icon,
+                          title: `${lat}, ${lon}`
+                      });
+
+        markers.push(marker)
+      }
+
+      function addCustomMarkers() {
+        const text = document.getElementById("customMarkersTextarea").value;
+
+        let split_on;
+        if (text.includes(";")) split_on = ";"
+        else split_on = "\n"
+
+        const splitted = text.split(split_on)
+        let color = "red"
+        
+        if (splitted[0].split(",")[0] === "color") {
+          color = splitted[0].split(",")[1]
+          splitted.shift();
+        }
+
+        
+        splitted.forEach(l => {
+          details = l.split(",")
+
+          if (details.length < 2) { return;}
+          else {
+            let icon;
+            const lat = parseFloat(details[0])
+            const lon = parseFloat(details[1])
+
+            let chosen_color;
+            let chosen_scale;
+
+            if (details.length == 2) {
+              chosen_color = color
+              chosen_scale = 2
+            } else {
+              chosen_color = details[2]
+              chosen_scale = 3
+            }
+
+            addCustomMarker(lat,lon,chosen_color,chosen_scale)
+          }
+
+        })
+
+        
+        document.getElementById("customMarkersTextarea").value = ""
+      }
+      
+      function clearCustomMarkers() {
+        markers.forEach(m => m.setMap(null))
+        markers = []
+
+        document.getElementById("addedMarkersTextarea").value = "";
+      }
+
+      let socket;
+      let stops = []
+      let tram_markers = {}
+      let passenger_markers = {}
+      let predicted_tram_markers = {}
+
+      let isSocketActive = false;
+
+      
+      
+      function socketMessageHandler(event) {
+        console.log("socket message handler was called")
+
+        //#region icons
+        const stopIcon = {
+              path: google.maps.SymbolPath.CIRCLE,
+              strokeColor: "black",
+              fillColor: "black",
+              scale: 2
+        };
+          
+        const tramIcon = {
+            path: google.maps.SymbolPath.CIRCLE,
+            strokeColor: "blue",
+            fillColor: "blue",
+            scale: 2
+        };
+  
+        const passengerIcon = {
+            path: google.maps.SymbolPath.CIRCLE,
+            strokeColor: "green",
+            fillColor: "green",
+            scale: 1
+        };
+  
+  
+        const predictedTramIcon = {
+            path: google.maps.SymbolPath.CIRCLE,
+            strokeColor: "purple",
+            fillColor: "purple",
+            scale: 3
+        };
+        //#endregion
+        let message = JSON.parse(event.data)
+
+        if (message["message_type"] === "stops") {
+            const stops = message["message_data"]
+            Object.entries(stops).forEach(s => {
+                [stop_id, stop_details] = s
+                const stop_marker = new google.maps.Marker({
+                        position: { lat: stop_details["stop_lat"], lng: stop_details["stop_lon"] },
+                        map: map,
+                        icon: stopIcon,
+                        title: `${stop_details["stop_name"]} (${stop_id})`
+                    });
+            })
+
+            // socket.send('trams')
+        }
+        else if (message["message_type"] === "update") {
+            console.log("update message", message["message_data"])
+            
+            const trams = message["message_data"]["trams"]
+            const passengers = message["message_data"]["passengers"]
+            const predicted_trams = message["message_data"]["predicted_trams"]
+            const current_time = message["message_data"]["current_time"]
+            const log = message["message_data"]["log"]
+
+            log.forEach(l => {
+              const time = l["time"]
+              const type = l["type"]
+              const message = l["message"]
+              
+              let log_line = document.createElement("span")
+              log_line.style.fontSize = "small"
+              const br = document.createElement("br")
+
+              log_line.innerText = `${time}:${message}`
+              if (type === "TRAM") log_line.style.backgroundColor = "#b8b8ff"
+              else if (type === "PREDICTOR") log_line.style.backgroundColor = "#8AE6BF"
+              else if (type === "OUTLIER") log_line.style.backgroundColor = "#d26767"
+              document.getElementById("log").prepend(br)
+              document.getElementById("log").prepend(log_line)
+            })
+
+            document.getElementById("current_details").innerText = `current time: ${current_time}, tram num: ${trams.length}, passenger num: ${passengers.length} (${Object.keys(passenger_markers).length}), predicted_tram num: ${predicted_trams.length} (${Object.keys(predicted_tram_markers).length})`;
+
+            trams.forEach(t => {
+                const tram_index = t["tram_index"]
+                const tram_number = t["tram_number"]
+                const passenger_num = t["passengers"]
+                const direction = t["direction"]
+                const state = t["state"]
+                const lat = t["lat"]
+                const lon = t["lon"]
+                if (tram_index in tram_markers) {
+                    tram_markers[tram_index].setPosition({ lat: lat, lng: lon })
+                    tram_markers[tram_index].setTitle(`${tram_number} (${tram_index}), ${state}->${direction}\n${lat} ${lon} (passengers: ${passenger_num})`)
+                } else {
+                    const tram_marker = new google.maps.Marker({
+                        position: { lat: lat, lng: lon },
+                        map: map,
+                        icon: tramIcon,
+                        title: `${tram_number} (${tram_index}), ${state}->${direction}\n${lat} ${lon} (passengers: ${passenger_num})`
+                    });
+                    tram_markers[tram_index] = tram_marker
+                }
+            })
+
+            if (Object.keys(passenger_markers).length - passengers.length >= 15) {
+              markerCleanup("passengers", passengers);
+            }
+            passengers.forEach(p => {
+                const passenger_id = p["passenger_id"]
+                const passenger_holder = p["holder"]
+                const passenger_goal = p["goal"]
+                const lat = p["lat"]
+                const lon = p["lon"]
+                const type = p["type"]
+                if (passenger_id in passenger_markers) {
+                    passenger_markers[passenger_id].setPosition({ lat: lat, lng: lon })
+                    passenger_markers[passenger_id].setTitle(`(${type} ${passenger_id}) @ ${lat} ${lon}\nheading for ${passenger_goal} (holder: ${passenger_holder} )`)
+                } else {
+                    const passenger_marker = new google.maps.Marker({
+                        position: { lat: lat, lng: lon },
+                        map: map,
+                        icon: passengerIcon,
+                        title: `(${type} ${passenger_id}) @ ${lat} ${lon}\nheading for ${passenger_goal} (holder: ${passenger_holder} )`
+                    });
+                    passenger_markers[passenger_id] = passenger_marker
+                }
+            })
+
+            if (Object.keys(predicted_tram_markers).length - predicted_trams.length >= 5) {
+              markerCleanup("predicted_trams", predicted_trams);
+            }
+            predicted_trams.forEach(p => {
+              const tram_id = p["tram_id"]
+              const passenger_num = p["passenger_num"]
+              const lat = p["lat"]
+              const lon = p["lon"]
+                if (tram_id in predicted_tram_markers) {
+                  predicted_tram_markers[tram_id].setPosition({ lat: lat, lng: lon })
+                  predicted_tram_markers[tram_id].setTitle(`predicted tram (${tram_id}) @ ${lat} ${lon}:\n${passenger_num} passengers`)
+                } else {
+                    const predicted_tram_marker = new google.maps.Marker({
+                        position: { lat: lat, lng: lon },
+                        map: map,
+                        icon: predictedTramIcon,
+                        title: `predicted tram (${tram_id}) @ ${lat} ${lon}:\n${passenger_num} passengers`
+                    });
+                    predicted_tram_markers[tram_id] = predicted_tram_marker
+                }
+            })
+        }
+
+      }
+
+      function connect_socket() {
+        return new Promise(function(resolve, reject) {
+          socket = new WebSocket(server_address);
+          socket.addEventListener('open', function (event) {
+              isSocketActive = true;
+              document.getElementById("connect_btn").disabled = true;
+              resolve()
+          });
+
+          socket.addEventListener('close', function (event) {
+              socket.send('simulation closed');
+              isSocketActive = false;
+              document.getElementById("start_simulation").disabled = false;
+              document.getElementById("save_settings").disabled = true;
+              document.getElementById("toggle_simulation").disabled = true;
+          });
+
+          socket.addEventListener('message', socketMessageHandler);
+
+          socket.onerror = function(err) {
+              reject(err);
+          };
+
+        });
+        
+      }
+
+      async function startSimulation() {
+        if (!isSocketActive) {
+          await connect_socket()
+        }
+        socket.send('start_simulation');
+        setTimeout(saveSettings(), 300)
+        document.getElementById("start_simulation").disabled = true;
+        document.getElementById("save_settings").disabled = false;
+        document.getElementById("toggle_simulation").disabled = false;
+        
+
+      }
+
+      function markerCleanup(cleanType, toLeave) {
+        console.log(`cleaning up ${cleanType} markers`);
+        if (cleanType === "passengers") {
+          let toLeaveSet = new Set();
+          toLeave.forEach(tl => toLeaveSet.add(tl["passenger_id"]));
+          Object.keys(passenger_markers).forEach(pm => {
+            if (!(pm in toLeaveSet)) {
+              passenger_markers[pm].setMap(null);
+              delete passenger_markers[pm];
+            }
+          })
+        } else if (cleanType === "predicted_trams") {
+          let toLeaveSet = new Set();
+          toLeave.forEach(tl => toLeaveSet.add(tl["tram_id"]));
+          Object.keys(predicted_tram_markers).forEach(ptm => {
+            if (!(ptm in toLeaveSet)) {
+              predicted_tram_markers[ptm].setMap(null);
+              delete predicted_tram_markers[ptm];
+            }
+          })
+        }
+
+
+      }
+
+      async function sendCommand() {
+        const text = document.getElementById("command_text").value;
+        if (isSocketActive && text.length > 0) {
+            socket.send(text);
+            console.log("command sent", text)
+        } else if (!isSocketActive && text.includes("test")){
+            await connect_socket();
+            socket.send(text);
+            console.log("command sent", text)
+
+            document.getElementById("start_simulation").disabled = true;
+            document.getElementById("save_settings").disabled = false;
+            document.getElementById("toggle_simulation").disabled = false;
+
+          }
+        else {
+          console.log("socket isn't active or command is empty")
+        }
+      }
+
+      function saveSettings() {
+        console.log("saving settings")
+        if (isSocketActive) {
+            socket.send(`time_delta,${simulationTimeDelta}`);
+            console.log("settings sent")
+        } else {
+            console.log("socket isn't active")
+        }
+      }
+
+      let isSimulationOn = false;
+      let simulationInterval;
+      let realTimeDelta = 0.1
+      let simulationTimeDelta = 5
+      function toggleSimulation() {
+        console.log("toggling simulation")
+        if (isSimulationOn) {
+            console.log("simulation becoming inactive")
+            isSimulationOn = false;
+        } else {
+            console.log("simulation becoming active so setting timeout for periodicstep")
+            simulationInterval = setTimeout(periodicSimulationStep, realTimeDelta*1000);
+            isSimulationOn = true;
+        }
+
+        console.log("isSimulationOn", isSimulationOn)
+      }
+      
+      function periodicSimulationStep() {
+          if (isSocketActive && isSimulationOn) {
+              socket.send("next");
+              const haha = setTimeout(periodicSimulationStep, realTimeDelta*1000);
+          } else {
+              console.log("socket disconnected or simulation paused")
+          }
+      }
+
+      function onRealTimeSliderChange(value) {
+          const output = document.getElementById("slider_realtime_delta_text");
+
+          output.innerText = value;
+          realTimeDelta = parseFloat(value)
+      }
+
+      function onSimulationTimeSliderChange(value) {
+          const output = document.getElementById("slider_simulation_delta_text");
+
+          output.innerText = value;
+          simulationTimeDelta = parseInt(value)
+      }
+
+    </script>
+  </head>
+  <body>
+    <!--The div element for the map -->
+    <div style="width: 100%; display: flex; flex-direction: column">
+
+      <div style="flex-grow: 4">
+        
+        <div id="map"></div>
+        <div id="logbox">
+          <!-- <h3> Here will be the log</h3>
+          <div>
+            <h4> log controls will be here</h4>
+            <button> yo1 </button>
+            <button> yo3 </button>
+            <button> yo4 </button>
+            <button> yo2 </button>
+          </div> -->
+          <div id="log" style="overflow: scroll; height: 500px; margin-top: 10px;">
+          </div>
+
+          <textarea id="customMarkersTextarea" placeholder="add custom markers as: LAT,LON,COLOR (optional)" style="width: 100%; height: 150px;"></textarea>
+          <button id="addCustomMarkers" onclick="addCustomMarkers()"> Add markers </button>
+          <button id="clearCustomMarkers" onclick="clearCustomMarkers()"> Clear markers </button>
+          <textarea id="addedMarkersTextarea" placeholder="right click on map to add a marker" style="width: 100%; height: 150px; margin-top: 10px;"></textarea>
+
+        </div>
+
+      </div>
+      <div id="controls">
+        <!-- <button onclick="addRandomMarker()"> add random marker </button>
+        <button onclick="randomlyMoveMarkers()"> randomly move </button> -->
+        <!-- <button onclick="togglePeriodicRandomMove()"> toggle random movement </button> -->
+        <button id="connect_btn" onclick="connect_socket()"> connect </button>
+        <button id="start_simulation" onclick="startSimulation()"> start simulation </button>
+        <button id="toggle_simulation" onclick="toggleSimulation()" disabled=true> toggle_simulation </button>
+        <input id="command_text" placeholder="enter your command"/>
+        <button id="send_command" onclick="sendCommand()"> send command </button>
+        <div class="slidecontainer">
+          <span> simulation delta</span>
+          <input type="range" min="1" max="300" value="5" step="1" class="slider" id="" oninput="onSimulationTimeSliderChange(this.value)">
+          <span id="slider_simulation_delta_text"> 5 </span>
+          <br/>
+          <span> realtime simulation delta</span>
+          <input type="range" min="0.1" max="5" value="0.1" step="0.1" class="slider" id="realtime_delta_slider" oninput="onRealTimeSliderChange(this.value)">
+          <span id="slider_realtime_delta_text"> 0.1 </span>
+        </div>
+        <button id="save_settings" onclick="saveSettings()" disabled=true> save settings </button>
+        <br/>
+        <span id="current_details"> current time: 0, tram num: 0, passenger num: 0 (0), predicted_tram num: 0 (0)</span>
+      </div>
+
+    </div>
+
+    <!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyBD7QNvVa_TpqZTNY8AYe5Fz21FlaHwx0o&callback=initMap&libraries=&v=weekly"
+      async
+    ></script>
+
+    </body>
+    </html>

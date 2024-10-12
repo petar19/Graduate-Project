@@ -1,0 +1,30 @@
+za otkrivanje rute bi bilo dobro sve rute spremiti kao niz koordinata (interpolirati koristeći stanice) pa prilikom otkrivanja da je korisnik u tramvaju uspoređivati 
+korisnikovu rutu (niz koordinata) sa nizom koordinata mogućih ruta
+
+android aplikacija:
+    za dobivanje informacija:
+        1) dohvaćanje lokacije -> najbliže stanice i mogući tramvaji *
+        2) lista stanice + karta -> klik pokazuje sljedeća vremena dolazaka tramvaja; lista tramvaja + karta -> klik prikazuje vremena dolazaka na pojedinu stanicu
+
+    za slanje lokacije (prva verzija):
+        1) pokretanje usluge slanja (poželjno da radi u pozadini)
+        2) pokušavanje automatskog otkrivanja broja tramvaja no ponuditi opciju da korisnik sam unese
+        3) korištenje akcelerometra za otkrivanje je li korisnik i dalje u vozilu (no ponuditi opciju da korisnik sam prekine)
+
+    slanje lokacije (poboljšana verzija):
+        1) pokretanje/prekidanje usluge slanja
+        2) postavljanje vremena rada usluge
+
+    komunikacija detalji:
+        za komunikaciju sam mislio koristiti socket - možda jedan za dobivanje informacija o lokacijama tramvaja, a drugi za slanje lokacija/primanje naredbi
+    
+    ostalo:
+        kad nema korisnika -> koristiti raspored
+        ako postoji više korisnika u jednom vozilu (grupirani korisnici) slanje lokacije podijeliti tako da svaki put drugi korisnik šalje (ušteda baterije/resursa)
+        povremeno poslati kontrolnu poruku -> da vidimo da li su svi korisnici u grupi i dalje u grupi
+
+podaci:
+    kombiniranje GTFS podataka i podataka dobivenih od korisnika (za točnije predikcije vremena dolazaka)
+    
+
+* za dobivanje najbliže stanice (a time i moguće tramvaje) koristi nekakav space-partitioning algoritam (octree, k-d tree)

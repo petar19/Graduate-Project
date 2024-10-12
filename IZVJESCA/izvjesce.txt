@@ -1,0 +1,180 @@
+Tjedni sastanak 22.3.2021.:
+
+  Napredak:
+    pronađeni slični radovi (link na rad je u OSTALO/linkovi.txt) - "Cooperative Transit Tracking using Smart-phones"
+    napravljen početni popis ideja/načina rada aplikacije
+
+  Plan za sljedeći tjedan:
+    detaljnije proći kroz gore navedeni rad
+    pogledati datoteke od ZET-a što se tiče rasporeda tramvaja
+
+  Status i rizici:
+    sve po planu
+
+
+Tjedni sastanak 29.3.2021.:
+
+  Napredak:
+    pronađeno još sličnih radova i konkretan primjer:
+      aplikacija Tiramisu, korištena u Pittsburgu
+    djelomična analiza GTFS datoteka za ZET:
+      odvajanje tramvaja i buseva (ruta, stanica, vremena dolazaka)
+      udaljenosti između stanica (samo susjednih zasad) - vremenska i prostorna
+
+
+  Plan za sljedeći tjedan:
+    čitanje i traženje radova
+    dodatna analiza GTFS datoteka za ZET
+    instalacija i postavljanje potrebnih alata (Android Studio, Latex)
+    početak pisanja rada i razvijanja aplikacije
+
+  Status i rizici:
+    sve po planu
+
+
+Tjedni sastanak 12.4.2021.:
+
+  Napredak:
+    daljna analiza datoteka ZET-a
+      udaljenosti (vremenska i prostorna) za svaki par stanica koje su povezane (posebno za svaki tramvaj)
+        napravljeno kao zbroj za svaki par stanica između
+    instalacija potrebnih programa
+
+
+  Plan za sljedeći tjedan:
+    početak pisanja rada i razvijanja aplikacije
+    uređivanje/bolje dokumentiranje koda korištenog za analizu datoteka ZET-a
+
+  Status i rizici:
+    nije napravljeno sve po planu ali ne bi trebalo biti previše problema
+
+
+Tjedni sastanak 19.4.2021.:
+
+  Napredak:
+    početak pisanja rada
+      napisan dio o analizi datoteka ZET-a
+    izmjenjen/dokumentiran kod
+
+
+  Plan za sljedeći tjedan:
+    početak rada na samom sustavu
+      istraživanje kako je najbolje napraviti simulaciju
+      uzimanje dijela grada/samo nekih tramvaja/ruta/stanica za simulaciju ili izmišljanje jednostavnog "grada" (ruta/stanica)
+
+  Status i rizici:
+    sve po planu
+
+Tjedni sastanak 26.4.2021.:
+
+  Napredak:
+    pisanje rada (popis poglavlja, početak pisanja određenih poglavlja)
+    popis ideja za simulaciju sustava
+
+
+  Plan za sljedeći tjedan:
+    rad na sustavu (model sustava)
+    početak rada na simulaciji
+
+  Status i rizici:
+    sve po planu
+
+Tjedni sastanak 3.5.2021.:
+  Napredak:
+     pisanje rada:
+       sustav i simulacija
+     rad na simulaciji:
+       osnovna simulacija kretanja tramvaja i prikaz simulacije
+
+  Plan za sljedeći tjedan:
+      nastavak rada na simulaciji
+
+  Status i rizici:
+    sve po planu
+
+
+Tjedni sastanak 10.5.2021.:
+  Napredak:
+    rad na simulaciji
+
+  Plan za sljedeći tjedan:
+      nastavak rada na simulaciji
+
+  Status i rizici:
+    sve po planu
+
+Tjedni sastanak 17.5.2021.:
+  Napredak:
+    rad na simulaciji
+      refactoring koda od prije
+      početak rada na simulaciji korisnika
+
+  Plan za sljedeći tjedan:
+      nastavak rada na simulaciji korisnika
+
+  Status i rizici:
+    sve po planu
+
+Tjedni sastanak 24.5.2021.:
+  Napredak:
+    rad na simulaciji
+      refactoring koda od prije
+      simulacija korisnika
+        komunikacija između tramvaja, korisnika, stanica
+        stvaranje ("spawning") na stanicama, ulazak i izlazak iz tramvaja
+
+  Plan za sljedeći tjedan:
+      nastavak rada na simulaciji
+        dokumentiranje
+        dodavanje više opcija sa kontrolne/vizualne stranice
+          npr. mogućnost promjene spawn ratea ili zastoja
+        dodavanje "ponašanja" za korisnike
+
+  Status i rizici:
+    sve po planu
+
+Tjedni sastanak 31.5.2021.:
+  Napredak:
+    rad na simulaciji
+      popravljanje bugova
+      dodan log događaja
+    napisan dio poglavlja simulacije
+
+  Plan za sljedeći tjedan:
+      nastavak rada na simulaciji
+        daljnje dokumentiranje
+      početak rada na predviđanju lokacija tramvaja
+
+  Status i rizici:
+    nije napravljeno sve po planu od prošlog tjedna no ne bi trebao biti problem
+
+Tjedni sastanak 14.6.2021.:
+  Napredak:
+    rad na simulaciji
+      bug fixes
+      napravljen dio predviđanja lokacija tramvaja
+    napisan dio rada
+      uvod, dio poglavlja o pregledu teme općenito (slični radovi...)
+      promjena poredaka poglavlja
+      napisan dio poglavlja o simulaciji
+    napisani planovi za svako poglavlje i potpoglavlje
+      kao natuknice o čemu će u tom dijelu biti riječ
+
+  Plan za sljedeći tjedan:
+      nastavak pisanja rada
+      dovršavanje programskog dijela
+
+  Status i rizici:
+    rad nije skoro gotov kao što je bio plan no ne bi trebalo biti problema
+
+Tjedni sastanak 21.6.2021.:
+  Napredak:
+    pisanje rada
+      većina poglavlja uglavnom gotova
+
+  Plan za sljedeći tjedan:
+      dovršetak pisanja rada
+
+  Status i rizici:
+    sve po planu
+
